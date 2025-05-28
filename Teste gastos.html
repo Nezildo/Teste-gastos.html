@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Gastos - Açaí e Caldos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #5cb85c; /* Cor verde para destaque */
+        }
+        .section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #eaf7ea;
+            border: 1px solid #d4edd4;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .result.negative {
+            background-color: #ffeaea;
+            border-color: #edd4d4;
+            color: #d9534f;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        li .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        li .remove-btn:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💲 Controle de Gastos Mensal</h1>
+        <p style="text-align: center;">Para seu empreendimento de Açaí e Caldos</p>
+
+        <div class="section">
+            <h2>💰 Receitas</h2>
+            <label for="receitaVendas">Vendas Estimadas (Açaí e Caldos):</label>
+            <input type="number" id="receitaVendas" placeholder="Ex: 5000" min="0">
+
+            <label for="outrasReceitas">Outras Receitas (Se houver):</label>
+            <input type="number" id="outrasReceitas" placeholder="Ex: 200" min="0">
+        </div>
+
+        <div class="section">
+            <h2>💸 Adicionar Novo Gasto</h2>
+            <label for="tipoGasto">Tipo de Gasto:</label>
+            <select id="tipoGasto">
+                <option value="insumos">Insumos (Açaí, frutas, caldos, etc.)</option>
+                <option value="aluguel">Aluguel/Taxa do Ponto</option>
+                <option value="contas">Contas (água, luz, internet)</option>
+                <option value="salarios">Salários/Pró-labore</option>
+                <option value="marketing">Marketing/Divulgação</option>
+                <option value="manutencao">Manutenção/Reparos</option>
+                <option value="impostos">Impostos</option>
+                <option value="outros">Outros</option>
+            </select>
+
+            <label for="descricaoGasto">Descrição do Gasto:</label>
+            <input type="text" id="descricaoGasto" placeholder="Ex: Açaí puro 5kg">
+
+            <label for="valorGasto">Valor do Gasto:</label>
+            <input type="number" id="valorGasto" placeholder="Ex: 150" min="0">
+            <button onclick="adicionarGasto()">Adicionar Gasto</button>
+        </div>
+
+        <div class="section">
+            <h2>📊 Resumo dos Gastos</h2>
+            <ul id="listaGastos">
+                </ul>
+            <p><strong>Total de Gastos: R$ <span id="totalGastos">0.00</span></strong></p>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Meta de Investimento</h2>
+            <label for="metaInvestimento">Quanto você quer investir este mês?</label>
+            <input type="number" id="metaInvestimento" placeholder="Ex: 500" min="0">
+        </div>
+
+        <button onclick="calcularSaldo()">Calcular Saldo para Investimento</button>
+
+        <div class="result" id="saldoResultado">
+            </div>
+    </div>
+
+    <script>
+        let gastos = [];
+
+        function adicionarGasto() {
+            const tipo = document.getElementById('tipoGasto').value;
+            const descricao = document.getElementById('descricaoGasto').value;
+            const valor = parseFloat(document.getElementById('valorGasto').value);
+
+            if (descricao && valor > 0) {
+                gastos.push({ tipo, descricao, valor });
+                document.getElementById('descricaoGasto').value = '';
+                document.getElementById('valorGasto').value = '';
+                atualizarListaGastos();
+            } else {
+                alert('Por favor, preencha a descrição e um valor válido para o gasto.');
+            }
+        }
+
+        function removerGasto(index) {
+            gastos.splice(index, 1);
+            atualizarListaGastos();
+        }
+
+        function atualizarListaGastos() {
+            const listaGastos = document.getElementById('listaGastos');
+            listaGastos.innerHTML = '';
+            let total = 0;
+
+            gastos.forEach((gasto, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${gasto.tipo.charAt(0).toUpperCase() + gasto.tipo.slice(1)}: ${gasto.descricao} - R$ ${gasto.valor.toFixed(2)}</span>
+                    <button class="remove-btn" onclick="removerGasto(${index})">Remover</button>
+                `;
+                listaGastos.appendChild(li);
+                total += gasto.valor;
+            });
+            document.getElementById('totalGastos').textContent = total.toFixed(2);
+        }
+
+        function calcularSaldo() {
+            const receitaVendas = parseFloat(document.getElementById('receitaVendas').value) || 0;
+            const outrasReceitas = parseFloat(document.getElementById('outrasReceitas').value) || 0;
+            const metaInvestimento = parseFloat(document.getElementById('metaInvestimento').value) || 0;
+
+            const totalReceitas = receitaVendas + outrasReceitas;
+            const totalGastos = gastos.reduce((sum, gasto) => sum + gasto.valor, 0);
+
+            const saldoBruto = totalReceitas - totalGastos;
+            const saldoParaInvestimento = saldoBruto - metaInvestimento;
+
+            const saldoResultadoDiv = document.getElementById('saldoResultado');
+            saldoResultadoDiv.classList.remove('negative'); // Remove a classe caso tenha sido adicionada antes
+
+            if (saldoParaInvestimento >= 0) {
+                saldoResultadoDiv.innerHTML = `
+                    <h3>🎉 Excelente!</h3>
+                    <p>Com suas receitas e gastos atuais, você tem **R$ ${saldoParaInvestimento.toFixed(2)}** disponíveis para investimento, já considerando sua meta de **R$ ${metaInvestimento.toFixed(2)}**!</p>
+                `;
+            } else {
+                saldoResultadoDiv.classList.add('negative');
+                saldoResultadoDiv.innerHTML = `
+                    <h3>⚠️ Atenção!</h3>
+                    <p>Faltam **R$ ${Math.abs(saldoParaInvestimento).toFixed(2)}** para atingir sua meta de investimento de **R$ ${metaInvestimento.toFixed(2)}**.</p>
+                    <p>Revise seus gastos ou busque aumentar suas receitas!</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
